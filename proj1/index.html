@@ -1,7 +1,252 @@
-<html>
-	<head>
-	</head>
-	<body>
-		Project 1 here
-	</body>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<style>
+  body {
+    padding: 100px;
+    width: 1000px;
+    margin: auto;
+    text-align: left;
+    font-weight: 300;
+    font-family: 'Open Sans', sans-serif;
+    color: #121212;
+  }
+  h1, h2, h3, h4 {
+    font-family: 'Source Sans Pro', sans-serif;
+  }
+</style>
+<title>CS 184 Rasterizer</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link href="https://fonts.googleapis.com/css?family=Open+Sans|Source+Sans+Pro" rel="stylesheet">
+</head>
+
+
+<body>
+
+<h1 align="middle">CS 184: Computer Graphics and Imaging, Spring 2022</h1>
+<h1 align="middle">Project 1: Rasterizer</h1>
+<h2 align="middle">Ivy Case, cs184-acl</h2>
+
+<br><br>
+
+    <div>
+
+        <h2 align="middle">Overview</h2>
+        <p>
+            Having never built any sort of renderer from scratch, this assignment was incredibly illuminating. Many graphics options that I see in the settings of video games -- such as sampling rates, mipmaps, antialiasing -- had been
+            completely abstracted in my mind where I had a general idea of what they did, but absolutely no idea how they worked. They were just magic to me! But with the work I've done on this project, the rabbit's now out of the hat:
+            I have learned how low-level rendering and rasterization techniques work, and I know exactly how to implement them!
+        </p>
+
+        <h2 align="middle">Section I: Rasterization</h2>
+
+        <h3 align="middle">Part 1: Rasterizing single-color triangles</h3>
+
+        <p>
+            The rasterization of a triangle is a very simple algorithm. Each triangle has three vertices, which in turn creates three lines between those points. For each of those three lines, and each pixel in the triangle's bounding box, the rasterizer does a point-
+            in-line test at the pixel location's center. If it passes all of those tests in either the clockwise or anticlockwise direction, the pixel is rendered. My algorithm is "no worse than one that checks each sample within the bounding box of the triangle"
+            because, well, that's precisely what it does!'
+        </p>
+
+        <div align="middle">
+            <table style="width=100%">
+                <tr>
+                    <td>
+                        <img src="images/Task1.png" align="middle" width="800px" />
+                        <figcaption align="middle">A simple, if a bit jaggy, scene.</figcaption>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <h3 align="middle">Part 2: Antialiasing triangles</h3>
+
+        <p>
+            To make our triangles prettier, we're going to need to pull out a few tricks. Antialiasing is a powerful technique to reduce jaggies and the Moire Effect. Luckily, the implementation only required some small tweaks to our current alogirithm
+            For each pixel, rather than finding one color, we now take <b>sample_rate</b> samples at different sections of the pixel's location, and average those colors together. This required modification in two parts of the rendering pipeline:
+            <br /><br />>        1. Rather than just at the center of the pixel, we perform point-in-line tests at different sections of the pixel, the division of which deteremined by <b>sample_rate</b>.
+            <br /><br />>        2. The sample buffer needed to be resized to be able to hold the data for <b>sample_rate</b> colors per pixel. This makes its size <b>width * height * sample_rate</b>.
+            <br /><br />This color average makes it so there is a smooth gradient into the background color at the edge of triangles, reducing the jagginess and "pixel-y" look of our simple raster.
+
+            <br /><br />In the images below, notice how increasing the sampling rate reveals more detail of the very skinny triangle.
+        </p>
+
+        <div align="middle">
+            <table style="width=100%">
+                <tr>
+                    <td>
+                        <img src="images/task2-SR1.png" align="middle" width="400px" />
+                        <figcaption align="middle">No anti-aliasing (sample rate 1).</figcaption>
+                    </td>
+                    <td>
+                        <img src="images/task2-SR4.png" align="middle" width="400px" />
+                        <figcaption align="middle">Anti-aliasing at a sample rate of 4.</figcaption>
+                    </td>
+                </tr>
+                <br />
+                <tr>
+                    <td>
+                        <img src="images/task2-SR16.png" align="middle" width="400px" />
+                        <figcaption align="middle">Anti-aliasing at a sample rate of 16.</figcaption>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <h3 align="middle">Part 3: Transforms</h3>
+
+        <p>I used transformations to make the robot do a cheeky push-up with their inhuman upperbody strength. Look at how they suspend themself; an impressive feat.</p>
+
+        <div align="middle">
+            <table style="width=100%">
+                <tr>
+                    <td>
+                        <img src="images/Task3.png" align="middle" width="800px" />
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <h2 align="middle">Section II: Sampling</h2>
+
+        <h3 align="middle">Part 4: Barycentric coordinates</h3>
+
+        <p>
+            Barycentric Coordinates are an incredibly helpful coordinate system for triangles, that describe a point within the triangle relative to the locations of its three vertices. This allows you
+            to easily linearly interpolate between values at each of the vertices. Take this triangle for example, where each vertex is either red, green, or blue.
+        </p>
+
+        <div align="middle">
+            <table style="width=100%">
+                <tr>
+                    <td>
+                        <img src="images/Task4-Aid.png" align="middle" width="800px" />
+                        <figcaption align="middle">See the seamless interpolation between each vertex?</figcaption>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <p>
+            Using many of these triangles, you can even create incredibly complex shapes like this color wheel:
+        </p>
+
+        <div align="middle">
+            <table style="width=100%">
+                <tr>
+                    <td>
+                        <img src="images/Task4.png" align="middle" width="800px" />
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+
+        <h3 align="middle">Part 5: "Pixel sampling" for texture mapping</h3>
+
+        <p>
+            Barycentric Coordinates come in <i>especially</i> handy when rendering from texture space to screen space. Instead of interpolating over color like before, you use the coordinate values
+            to determine a (u, v) coordinate with which to sample the color for your (x, y) coordinate. However, as (u, v) is often a precise decimal value, it can be difficult to determine which pixel
+            (x, y) to color. There are two main methods of determining this for pixel sampling: nearest-pixel and bilinear.
+
+            <br /><br />Nearest-neighbor pixel sampling just rounds the (u, v) coordinates to the nearest texel, and returns the color of that. Simple.
+            <br /><br />Bilinear pixel sampling <i>interpolates</i> over the values of the four closest texels, creating a much smoother result.
+        </p>
+        <div align="middle">
+            <table style="width=100%">
+                <tr>
+                    <td>
+                        <img src="images/Task5-Near-SR1.png" align="middle" width="400px" />
+                        <figcaption align="middle">Nearest-pixel sampling with a sample rate of 1.</figcaption>
+                    </td>
+                    <td>
+                        <img src="images/Task5-Near-SR16.png" align="middle" width="400px" />
+                        <figcaption align="middle">Nearest-pixel sampling with a sample rate of 16.</figcaption>
+                    </td>
+                </tr>
+                <br />
+                <tr>
+                    <td>
+                        <img src="images/Task5-Bi-SR1.png" align="middle" width="400px" />
+                        <figcaption align="middle">Bilinear sampling with a sample rate of 1.</figcaption>
+                    </td>
+                    <td>
+                        <img src="images/Task5-Bi-SR16.png" align="middle" width="400px" />
+                        <figcaption align="middle">Bilinear sampling with a sample rate of 16.</figcaption>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <p>
+            As you can see, the bilinear sampling algorithm results in a much smoother, albeit blurrier, result. This makes it <i>significantly</i> easier to recognize and read the little R next to the twisted logo.
+        </p>
+
+
+        <h3 align="middle">Part 6: "Level sampling" with mipmaps for texture mapping</h3>
+
+        <p>
+            We can further improve on this result. Level sampling sources colors from different <i>mipmap levels</i> rather than the texture itself. To do this, we first have to see how far away in texture space (x + 1, y) and (x, y + 1) are.
+            Whatever the further distance is between the two determines how high our mipmap level will be. Each higher mipmap level is lower and detail and more performant. The result is a better-looking image that also uses less resources.
+
+            <br /><br />We run into a similar issue to before, however. The calculated mipmap level is more often than not a precise decimal value between two mipmap levels, and we can use our same trusty algorithms as before to solve this!
+            <br /><br />Nearest-neighbor texture sampling just rounds the mipmap level to the nearest level, and does pixel sampling entirely on that level. Once again: simple!
+            <br /><br />Bilinear pixel sampling interpolates over the values at the mipmap level above and below the value we calculated, once again creating a much smoother result.
+
+            <br /><br /><br />Look at the results on one of my old art pieces:
+        </p>
+
+        <div align="middle">
+            <table style="width=100%">
+                <tr>
+                    <td>
+                        <img src="images/Task6-LZERO-PNEAR.png" align="middle" width="400px" />
+                        <figcaption align="middle">Nearest pixel sampling at level 0 only.</figcaption>
+                    </td>
+                    <td>
+                        <img src="images/Task6-LZERO-PLINEAR.png" align="middle" width="400px" />
+                        <figcaption align="middle">Bilinear pixel sampling at level 0 only.</figcaption>
+                    </td>
+                </tr>
+                <br />
+                <tr>
+                    <td>
+                        <img src="images/Task6-LNEAR-PNEAR.png" align="middle" width="400px" />
+                        <figcaption align="middle">Nearest pixel sampling at nearest mipmap level.</figcaption>
+                    </td>
+                    <td>
+                        <img src="images/Task6-LNEAR-PLINEAR.png" align="middle" width="400px" />
+                        <figcaption align="middle">Bilinear pixel sampling at nearest mipmap level.</figcaption>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <p>
+            As you can see, the addition of level sampling reduces the warping on the perfectly-circular pips of the die, creating a better-looking result with the only downside being a bit of overblurring.
+            <br /><br />We now have three antialiasing techniques, each with their own tradeoffs.
+            <br /><br />Supersampling: powerful, but very costly on performance.
+            <br /><br />Pixel-sampling: Much more performant compared to supersampling, but with imperfect antialiasing and some warping.
+            <br /><br />Texture-sampling: Even more performant, with strong anti-aliasing power, but with the issue of overblurring.
+        </p>
+
+        <h2 align="middle">Section III: Art Competition</h2>
+
+        <h3 align="middle">Part 7: Draw something interesting!</h3>
+
+        <div align="middle">
+            <table style="width=100%">
+                <tr>
+                    <td>
+                        <img src="images/competition.png" align="middle" width="800px" />
+                        <figcaption align="middle">
+                            A random boquet, <br />
+                            Three hundred eccentric shapes, <br />
+                            Exploding in space. <br />
+                        </figcaption>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+    </div></body>
 </html>

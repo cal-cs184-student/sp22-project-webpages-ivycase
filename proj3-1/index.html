@@ -1,7 +1,272 @@
-<html>
-	<head>
-	</head>
-	<body>
-		Project 3-1 here
-	</body>
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<style>  
+    div.padded {  
+      padding-top: 0px;  
+      padding-right: 100px;  
+      padding-bottom: 0.25in;  
+      padding-left: 100px;  
+    }  
+  </style> 
+<title>CS 184 Pathtracer 1</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rel="stylesheet" type="text/css" href="style.css" media="screen" />
+</head>
+<body>
+    <br />
+    <h1 align="middle">Assignment 3: PathTracer</h1>
+    <h2 align="middle">Project 3-1: Pathtracer</h2>
+    <h2 align="middle">Ivy Case, Kevin Ponce</h2>
+    <br><br>
+
+    <div class="padded">
+        <p>In this assignment we learned and were able to create rays and use mehtods such as bounding boxes and importance sampling to generate fast and accurate images more or less as how we would portray them in real life.
+        <br><br>
+        In order to do so we had to familiarize ourselves with the way rays are generated and how they interacted with objects as well as how we could speed the proecess through the use of bounding boxes.
+        <br/><br/>
+        In addition to this we needed to know the practices that allowed us to render these faster smother images such as importance sampling and adaptive sampling.
+        </p>
+        <o>
+            The website writeup is intended to be a self-contained walkthrough of the assignment: we want this to be a piece of work which showcases your understanding of relevant concepts through both mesh images as well as written explanations about what you did to complete each part of the assignment. Try to be as clear and organized as possible when writing about your own output files or extensions to the assignment. We want to understand what you've achieved and how you've done it!</p>
+            <p>If you are well-versed in web development, feel free to ditch this template and make a better looking page. Just make sure that you include all the components as we've laid them out here. </p>
+
+            <h2 align="middle">Part 1: Ray Generation and Intersection</h2>
+            <p>
+                What we did for the ray generation is, starting from the normalized point that they gave us, we convert it to a camera point. We do this by calculating the distance from the lop right and bottom left, multiplying our x and y coordinates by the respective axis to get the camera position. From here normalize the point then we use the c2w matrix scale and translate our camera point  to a world direction which we use to generate the world ray.
+                <br /><br />
+                For triangle intersection what we did was use the Möller-Trombore Algorithm to determine whether a ray lies within a triangle which is more efficient than the 3 line test, and lets us find out when the ray will intersect the triangle. We then make sure that the time value is within our near and far clipping plane and that the beasian coordinates are valid. After confirming that these 2 things are true we can confidently determine that the ray intersects the triangle and at what time it does so.
+            </p>
+            <div align="center">
+                <table style="width=100%">
+                    <tr>
+                        <td align="middle">
+                            <img src="images/CBspheres.png" width="480px" />
+                            <figcaption align="middle">Spheres rendered with normal shading</figcaption>
+                        </td>
+                        <td>
+                            <img src="images/CBdragon.png" width="480px" />
+                            <figcaption align="middle">Dragon rendered with normal shading</figcaption><!-- this might be a problem later i can't remember-->
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+
+
+
+            <h2 align="middle">Part 2: Bounding Volume heirarchy</h2>
+            <p>
+                We decided to modify the starting for loop by adding an aggregate outside and expanding that with each of the primitive’s centroids and counting the number of primitives in the current node. After the for loop we get the extent of the bbox and check which of the x, y, or z planes is the largest for this bbox. Following this step we sort the start through end using the built in partition function comparing each box’s centroid with our aggregate’s centroid and sorting them according to whether they were smaller or larger than the agregate’s centroid, we also use the output of the partition to be the middle primitive. Once that is done we set the nodes start and end then check if the count mentioned earlier is greater than the max_leafsize. If it is, we set the left node to be a recursive call with start node as the start and the middle primitive as the end while the right node is a recursive call with middle primitive as the start and end as the end, returning nodes after these are set.
+            </p>
+            <div align="center">
+                <table style="width=100%">
+                    <tr>
+                        <td>
+                            <img src="images/cow.png" width="480px" />
+                            <figcaption align="middle">Cow rendered with BHV: original time: 33.24 seconds sped up time: 1.66 seconds</figcaption>
+                        </td>
+                        <td>
+                            <img src="images/beetle.png" width="480px" />
+                            <figcaption align="middle"> Beetle rendered with BHV: original time: 42.86 seconds sped up time: 1.68 seconds</figcaption><!-- this might be a problem later i can't remember-->
+                        </td>
+                        <td>
+                            <img src="images/teapot.png" width="480px" />
+                            <figcaption align="middle">Teapot rendered with BHV: original time: 12.77 seconds sped up time: 0.94 seconds</figcaption>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <p>
+                We were able to observe significant differences in the times when comparing the non- recursed bvh intersect and the recursive function we made in bvh intersect. This is due to the prior checks we make about the bboxes before deciding whether to sample the primitives within it or not. We also noticed that the times are not as good as the times that were referenced in the spec and we presume this is because the hive machines likely have better hardware than our machines do. We can also see when comparing the number of primitives that when we increase by 2 thousand from teapot, having 2464 primitives, to cow, having 5856 primitives,  our time increases by about a second but the second time we increase by another 2 thousand from cow to beetle, having 7558 primitives, our time only increases by .02 seconds which follows our goal of getting a logarithmic increase as well as the fact that our time comparisons seem to be logarithmic
+            </p>
+
+
+            <h2 align="middle">Part 3: Direct Illumination</h2>
+            <p>
+                estimate_direct_light_hemisphere -
+                <br /><br />
+                For this function what we did was create a for loop that goes from 1 to num_samples and gets a random w_in from hemisphereSampler-> get_sample and uses that times the origin to world transform to create a new ray. We then check if it has an intersection and if it does we follow the monte carlo estimation to get the new ray using f from the isect multiplied by zero bounce with the ray calculated previously and also multiplied with the cosine theta of the w_in. We then add that to our L_out after dividing it by 2*PI  and continue our loop. After the loop finishes we divide by num_samples and return L_out.
+                <br /><br />
+                estimate_direct_lighting_importance -
+                <br /><br />
+                This function requires us to do the opposite of what we did in the hemisphere sampling.The first thing we do is check if the light we are currently on in our for loop is a point light or not and if it is not a point light we create num_samples based on our l value and loop through this. We then ended up creating 2 new doubles, pdf and disttolight. We also again create a w_in like in the last function however this time it is set by using light->sample() with our created inputs and hit_p. We then create a new ray using hit_p and w_in and set the rays min to epsilon, to make sure it doesn’t collide into itself, and the max to direct_light - epsilon to make sure it just barely doesn’t “hit” the light. We then create a temporary intersection and check if the ray intersects and if it doesn't we calculate the tha radiance. We do this for each light and add each one to l_out.
+            </p>
+            <div align="center">
+                <table style="width=100%">
+                    <tr>
+                        <td>
+                            <img src="images/bunny_importance_1.png" width="480px" />
+                            <figcaption align="middle">Bunny with an importance sampling of 1</figcaption>
+                        </td>
+                        <td>
+                            <img src="images/bunny_importance_4.png" width="480px" />
+                            <figcaption align="middle">Bunny with an importance sampling of 4</figcaption><!-- this might be a problem later i can't remember-->
+                        </td>
+                        <td>
+                            <img src="images/bunny_importance_16.png" width="480px" />
+                            <figcaption align="middle">Bunny with an importance sampling of 16</figcaption>
+                        </td>
+                        <td>
+                            <img src="images/bunny_importance_64.png" width="480px" />
+                            <figcaption align="middle">Bunny with an importance sampling of 64</figcaption>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <p>
+                What we ended up finding was that hemisphere sampling was much noisier than the importance light sampling. Although the hemisphere sampling is simpler and so can often take less time the time uptick for importance sampling wasn’t too much bigger to warrant us needing to worry about it too much. We also see much better shading with importance sampling as well as and increase in the visibility of muscles on the bunny provided. We did see that lower pixel samples rate also lowered the importance sampling accuracy to be similar to that of the hemisphere and shows that better picture quality will take more time and we will have to potentially decide on trade offs in the future.
+            </p>
+
+
+            <h2 align="middle">Part 4: Global Illumination</h2>
+            <p>
+                What we first do as the name of the function implies is use the one bounce radiance and add that to the L_out. We then create our roulet percentage to pass into the coin flip to get our bounce boolean. We then check if the max_bounce  depth is greater than one as well as if it is at the depth already or if our bounce boolean is true. If we get true we again create a pdf and w_in, putting these values into the sample_f function. Afterwards we create a ray altering the w_in by multiplying by the w2o transform provided and set this rays depth to the previous rays -1 the min to esp but the max to the same max along with creating a new intersection. We then do another if case checking for intersections with thai new ray and recurse. Once we check if the ray depth is not the max depth and our bounce bool was true, if it is true we add the output illumination divided by the roulette and regardless we add it to the L_out after dividing it by the pdf. We then return the ending L_out.
+            </p>
+            <div align="center">
+                <table style="width=100%">
+                    <tr>
+                        <td align="middle">
+                            <img src="images/part4_spheres.png" width="480px" />
+                            <figcaption align="middle">Spheres rendered at 1024 with both direct and indirect sampling</figcaption>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <h3 align="middle">Direct lighting V.S Indirect lighting</h3>
+
+            <p>
+                When we look at direct lighting only compared to the end output we see that we are missing a lot of the color that should be reflected off of the ball as well as very dark shadows under the ball.
+            </p>
+            <div align="center">
+                <table style="width=100%">
+                    <tr>
+                        <td align="middle">
+                            <img src="images/spheres_direct_only.png" width="480px" />
+                            <figcaption align="middle">Spheres rendered at 1024 with only direct illumination</figcaption>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <p>
+                Looking at only indirect lighting we see that all the colors are not as bright and that there is some noise which looks like there could be shadows in certain positions when the end result shows that there will not be. We do see more color here as the color from the walls reflect the 2 balls much better here.
+            </p>
+            <div align="center">
+                <table style="width=100%">
+                    <tr>
+                        <td align="middle">
+                            <img src="images/spheres_indirect_only.png" width="480px" />
+                            <figcaption align="middle">Spheres rendered at 1024 with only indirect illumination</figcaption>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+
+            <h3 align="middle">Increasing the amount of bounces</h3>
+            <div align="center">
+                <table style="width=100%">
+                    <tr>
+                        <td>
+                            <img src="images/part4_CBbunny_bounce_0.png" width="480px" />
+                            <figcaption align="middle">0 bounce bunny</figcaption>
+                        </td>
+                        <td>
+                            <img src="images/part4_CBbunny_bounce_1.png" width="480px" />
+                            <figcaption align="middle">1 bounce bunny</figcaption>
+                        </td>
+                        <td>
+                            <img src="images/part4_CBbunny_bounce_2.png" width="480px" />
+                            <figcaption align="middle">2 bounce bunny</figcaption>
+
+                        </td>
+                        <td>
+                            <img src="images/part4_CBbunny_bounce_3.png" width="480px" />
+                            <figcaption align="middle">3 bounce bunny</figcaption>
+
+                        </td>
+                        <td>
+                            <img src="images/part4_CBbunny_bounce_100.png" width="480px" />
+                            <figcaption align="middle">100 bounce bunny</figcaption>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <p>
+                As we increase the number  of bounces in our image after the first 2 images of 0 and 1 bounces we stop seeing too much of a difference in our images to the point where from 2 to 3 and 3 to 100 i can’t even really see what the difference is. This is probably due to the roulette variable and us not really being able to get to 100 bounces most of the time, but since we know this is the case we also shouldn’t be attempting to make images super accurate because as we see the results aren’t always different and we may sacrifice a lot of  time in order to get theses results.
+            </p>
+
+            <h3 align="middle">Increasing Sample-per-pixel rate</h3>
+            <div align="center">
+                <table style="width=100%">
+                    <tr>
+                        <td>
+                            <img src="images/sample_rates_1.png" width="480px" />
+                            <figcaption align="middle">Dragon with a sample rate of 1</figcaption>
+                        </td>
+                        <td>
+                            <img src="images/sample_rates_2.png" width="480px" />
+                            <figcaption align="middle">Dragon with a sample rate of 2</figcaption>
+                        </td>
+                        <td>
+                            <img src="images/sample_rates_4.png" width="480px" />
+                            <figcaption align="middle">Dragon with a sample rate of 4</figcaption>
+
+                        </td>
+                        <td>
+                            <img src="images/sample_rates_8.png" width="480px" />
+                            <figcaption align="middle">Dragon with a sample rate of 8</figcaption>
+
+                        </td>
+                        <td>
+                            <img src="images/sample_rates_16.png" width="480px" />
+                            <figcaption align="middle">Dragon with a sample rate of 16</figcaption>
+                        </td>
+                        <td>
+                            <img src="images/sample_rates_64.png" width="480px" />
+                            <figcaption align="middle">Dragon with a sample rate of 64</figcaption>
+                        </td>
+                        <td>
+                            <img src="images/sample_rates_1024.png" width="480px" />
+                            <figcaption align="middle">Dragon with a sample rate of 1024</figcaption>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <p>
+                Here we again see that as we increase the sample rate per pixel the noise seen in our 1 sample rate decreases and the image becomes much clearer ever time we increase it where the noise is almost all gone by rate 64 and its almost completely imperceptible by the time we get to 1024.
+            </p>
+
+
+            <h2 align="middle">Part 5: Adaptive Sampling</h2>
+            <p>
+                At the start of the function we first created 2 doubles which we will acquire from illuminance later. We then go into a for loop going through the num samples,  if this is our first time in the for loop we get the global illumination from the ray add illumination to our average illumination get the illuminance so we can add that to our s1, as well as take it to the second power to add to our s2. Once we are done with the first iteration we take our s1 and divide it by i to get our mean variable, we also get our variance squared by getting 1 divided by i - 1.0 all times s2 - s1^ 2 divided by i. Using that we calculate the convergence which is 1.96 times  the square root of variance squared divided by the square root of i, the current loop. If four max tolerance times the mean is  greater than or equal to this convergence we stop the loop. Otherwise we repeat what we did in the first iteration with these new values.
+            </p>
+            <div align="center">
+                <table style="width=100%">
+                    <tr>
+                        <td>
+                            <img src="images/bunny_rate_part5.png" width="480px" />
+                        </td>
+                        <td>
+                            <img src="images/bunny_noisefree.png" width="480px" />
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <!-- <p>Here is an example of how to include a simple formula:</p>
+            <p align="middle"><pre align="middle">a^2 + b^2 = c^2</pre></p>
+            <p>or, alternatively, you can include an SVG image of a LaTex formula.</p>
+            <p>This time it's your job to copy-paste in the rest of the sections :)</p>
+            -->
+
+        </o>
+    </div>
+</body>
 </html>
+
+
+
+

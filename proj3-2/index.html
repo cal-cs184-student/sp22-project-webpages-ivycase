@@ -1,7 +1,148 @@
-<html>
-	<head>
-	</head>
-	<body>
-		Project 3-2 here
-	</body>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<style>  
+    div.padded {  
+      padding-top: 0px;  
+      padding-right: 100px;  
+      padding-bottom: 0.25in;  
+      padding-left: 100px;  
+    }  
+  </style> 
+<title>Your Name  |  CS 184</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rel="stylesheet" type="text/css" href="style.css" media="screen" />
+</head>
+<body>
+    <br />
+    <h1 align="middle">Assignment 3-2: PathTracer</h1>
+    <h2 align="middle">Ivy Case, Kevin Ponce</h2>
+
+    <div class="padded">
+        <p>In this project we learned how to create different materials for our raytracing renderer. Specifically, we created a Reflection, Refraction, Glass and Microfacet material. Most of the implemntation was
+        based on real-world principles and formulas, so pretty much all of our road blocks were syntactical or solved by re-reading the spec carefully. We generated quite a few pretty pictures!</p>
+
+            <h2 align="middle">Part 1: Mirror and Glass Materials</h2>
+    <div align="middle">
+            <table style="width=100%">
+                <tr>
+                    <td>
+                        <img src="images/part1_0_64_4.png" align="middle" width="300px" />
+                        <figcaption align="middle">Depth 0.</figcaption>
+                    </td>
+                    <td>
+                        <img src="images/part1_1_64_4.png" align="middle" width="300px" />
+                        <figcaption align="middle">Depth 1.</figcaption>
+                    </td>
+                    <td>
+                        <img src="images/part1_2_64_4.png" align="middle" width="300px" />
+                        <figcaption align="middle">Depth 2.</figcaption>
+                    </td>
+                </tr>
+                <br />
+                <tr>
+                    <td>
+                        <img src="images/part1_3_64_4.png" align="middle" width="300px" />
+                        <figcaption align="middle">Depth 3.</figcaption>
+                    </td>
+                    <td>
+                        <img src="images/part1_4_64_4.png" align="middle" width="300px" />
+                        <figcaption align="middle">Depth 4.</figcaption>
+                    </td>
+                    <td>
+                        <img src="images/part1_5_64_4.png" align="middle" width="300px" />
+                        <figcaption align="middle">Depth 5.</figcaption>
+                    </td>
+                </tr>
+                <br />
+                <tr>
+                    <td></td>
+                    <td>
+                        <img src="images/part1_100_64_4.png" align="middle" width="300px" />
+                        <figcaption align="middle">Depth 100.</figcaption>
+                    </td>
+                </tr>
+            </table>
+        </o>
+    </div>
+    <p>
+        The <b>zero bounce</b> here looks like our normal zero bounce, but once we get to <b>one bounce</b> we see that the light source appears on both of the spheres as they both refract and reflect.
+        On <b>two bounces</b> we can see the left sphere reflecting the right spheres one bounce image and the right sphere now shows the surrounding walls color on it. On <b>three bounces</b> the reflections
+        and refractions are updated and also appear to be a concentrated light source emerging from the right sphere due to refraction. On <b>four bounces</b> a second light focal point,
+        probably due to the reflection of the left sphere, appears on the right wall. On <b>five bounces</b> we notice that the image reflected on the right ball of the ceiling seems to become blurrier
+        or more blended in with the ceiling. The changes between five bounces and <b>one-hundred bounces</b> are incredibly subtle, which might just mean we've reached a limit on clarity.
+    </p>
+
+    <h2 align="middle">Part 2: Microfacet Material</h2>
+    <div align="middle">
+        <table style="width=100%">
+            <tr>
+                <td>
+                    <img src="images/part2_dragon1.png" align="middle" width="400px" />
+                    <figcaption align="middle">Alpha 0.005</figcaption>
+                </td>
+                <td>
+                    <img src="images/part2_dragon2.png" align="middle" width="400px" />
+                    <figcaption align="middle">Alpha 0.05</figcaption>
+                </td>
+            </tr>
+            <br />
+            <tr>
+                <td>
+                    <img src="images/part2_dragon3.png" align="middle" width="400px" />
+                    <figcaption align="middle">Alpha 0.25</figcaption>
+                </td>
+                <td>
+                    <img src="images/part2_dragon4.png" align="middle" width="400px" />
+                    <figcaption align="middle">Alpha 0.5</figcaption>
+                </td>
+            </tr>
+        </table>
+        </o>
+    </div>
+    <p>
+        Our first image, 0.005 alpha, looks very reflective specifically to the walls. When we get to the second image with a 0.05 we get more of a shine from the light and color from the walls.
+        On the third image of an alpha of .25 a lot of the shine turns more into a shimmer as the yellow gold color becomes more prominent in the image and we don’t see as much of a reflective
+        metal look from it. Our last image using a .5 alpha becomes much yellower and less reflective showing the features of the dragon more easily still showing faint signs of reflecting the wall.
+        <br /><br />
+        <div align="middle">
+            <table style="width=100%">
+                <tr>
+                    <td>
+                        <img src="images/part2_bunny_default.png" align="middle" width="600px" />
+                        <figcaption align="middle">Default cosine hemisphere sampling.</figcaption>
+                    </td>
+                    <td>
+                        <img src="images/part2_bunny.png" align="middle" width="600px" />
+                        <figcaption align="middle">Importance sampling.</figcaption>
+                    </td>
+                </tr>
+            </table>
+            </o>
+        </div>
+        Our importance sampling is much clearer than hemisphere sampling, which looks darker and shows significant noise on the bunny itself.
+        <br /><br />
+        <div align="middle">
+            <table style="width=100%">
+                <tr>
+                    <td>
+                        <img src="images/part2_silicon.png" align="middle" width="600px" />
+                    </td>
+                </tr>
+            </table>
+            </o>
+        </div>
+        Our material is based on Silicon, with parameters n = 3.6730 and k = 0.005.
+    </p>
+
+
+
+    <h2 align="middle">Conclusion</h2>
+    <p>This project was a blast to cooperate on since we already developed the fundamentals in the previous part. Focusing on these specific materials allowed us, as a group, to concentrate our efforts on making
+    good-looking, realistic materials with reflection and refraction. This compounded on the lessons we learned in lecture, which will make the knowledge set more firmly in our minds.</p>
+</body>
 </html>
+
+
+
+
